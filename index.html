@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI ကိုယ်ရည်ကိုယ်သွေး စမ်းသပ်ချက် Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TWA SDK: Telegram Mini App ၏ လုပ်ဆောင်ချက်များကို အသုံးပြုရန် ထည့်သွင်းထားသည် -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
+        body {
+            font-family: 'Padauk', sans-serif;
+            background-color: #f7f9fc;
+        }
+        .bot-card {
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 1.5rem;
+        }
+        .btn-answer {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-answer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="p-4 flex items-center justify-center min-h-screen">
+
+    <!-- Main Container (Simulates Telegram Chat Window) -->
+    <div id="app" class="bot-card bg-white w-full p-6 md:p-8">
+        
+        <!-- Welcome Screen -->
+        <div id="welcome-screen">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">🤖 Personality Creator Bot</h1>
+            <p class="text-gray-600 mb-6 text-center">
+                သင့်ရဲ့ ကိုယ်ရည်ကိုယ်သွေး အမျိုးအစား (MBTI) ကို ရှာဖွေဖို့ မေးခွန်း ၃၀ ကို ဖြေကြားရမှာ ဖြစ်ပါတယ်။ အဖြေတစ်ခုချင်းစီဟာ သင့်ရဲ့ စိတ်နေစိတ်ထားကို ဖော်ပြပါတယ်။
+            </p>
+            <div class="p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 rounded-lg mb-6">
+                <p class="font-semibold">မှတ်ချက်။</p>
+                <p class="text-sm">စိတ်ထဲအရှိအတိုင်း အချိန်မဆွဲဘဲ ဖြေဆိုပေးပါ။ "မှား" တဲ့အဖြေဆိုတာ မရှိပါဘူး။</p>
+            </div>
+            <button onclick="startTest()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl btn-answer hover:bg-blue-700">
+                စတင်ရန် /start
+            </button>
+        </div>
+
+        <!-- Test Screen -->
+        <div id="test-screen" class="hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">မေးခွန်း <span id="q-number">1</span> / 30</h2>
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+            </div>
+
+            <!-- Question Area -->
+            <div class="bg-gray-100 p-4 rounded-xl mb-6">
+                <p id="question-text" class="text-lg text-gray-700 font-medium"></p>
+            </div>
+
+            <!-- Answer Buttons (Simulates Bot Keyboard) -->
+            <div class="space-y-4">
+                <button id="answer-a" onclick="recordAnswer('A')" class="btn-answer w-full bg-indigo-500 text-white py-3 rounded-xl font-medium hover:bg-indigo-600"></button>
+                <button id="answer-b" onclick="recordAnswer('B')" class="btn-answer w-full bg-green-500 text-white py-3 rounded-xl font-medium hover:bg-green-600"></button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center">
+            <h2 class="text-3xl font-bold text-blue-600 mb-4">🎉 စမ်းသပ်မှု ပြီးဆုံးပါပြီ!</h2>
+            <p class="text-xl text-gray-700 mb-2">သင့်ရဲ့ ကိုယ်ရည်ကိုယ်သွေး အမျိုးအစား (MBTI)</p>
+            
+            <div class="inline-block px-6 py-3 my-4 bg-blue-100 border-2 border-blue-600 rounded-xl">
+                <span id="personality-type" class="text-4xl font-extrabold text-blue-800"></span>
+            </div>
+
+            <div id="report-container" class="mt-6 text-left space-y-4">
+                <!-- Description Section -->
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2 border-b pb-1">👤 ကိုယ်ရည်ကိုယ်သွေး အနှစ်ချုပ်</h3>
+                    <p id="type-description" class="text-gray-700"></p>
+                </div>
+
+                <!-- Career Section -->
+                <div class="p-4 bg-green-50 rounded-lg">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2 border-b pb-1">💼 သင့်လျော်သော အလုပ်အကိုင်များ</h3>
+                    <ul id="career-list" class="list-disc list-inside text-gray-700 pl-4 space-y-1"></ul>
+                </div>
+
+                    <!-- The default action is window.location.reload() for non-TWA usage -->
+                    <button id="final-action-button" onclick="window.location.reload()" class="w-full bg-red-500 text-white font-semibold py-3 rounded-xl btn-answer mt-6 hover:bg-red-600">
+                        ပြန်စတင်ရန်
+                    </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const questions = [
+            // E (Extroversion) vs I (Introversion) - 8 Qs
+            { q: "လူအများနဲ့အတူ လှုပ်ရှားရတာကို ပိုနှစ်သက်သလား ဒါမှမဟုတ် တစ်ယောက်တည်း အေးဆေးနေရတာကို ပိုနှစ်သက်သလား?", a: "A: လူအများနဲ့အတူ လှုပ်ရှားခြင်း", b: "B: တစ်ယောက်တည်း အေးဆေးနေခြင်း", typeA: 'E', typeB: 'I' },
+            { q: "စကားပြောတဲ့အခါ စိတ်ထဲရှိတာကို ချက်ချင်းပြောတတ်လား ဒါမှမဟုတ် အရင်စဉ်းစားပြီးမှ ပြောတတ်လား?", a: "A: ချက်ချင်းပြောတတ်ခြင်း", b: "B: စဉ်းစားပြီးမှ ပြောတတ်ခြင်း", typeA: 'E', typeB: 'I' },
+            { q: "စိတ်ဖိစီးမှုတွေ များလာတဲ့အခါမှာ ဘယ်လိုလုပ်ဆောင်လေ့ရှိလဲ?", a: "A: သူငယ်ချင်းတွေနဲ့ ဆုံပြီး စကားပြော အပန်းဖြေခြင်း", b: "B: တိတ်ဆိတ်တဲ့နေရာမှာ အနားယူ တစ်ယောက်တည်း နေခြင်း", typeA: 'E', typeB: 'I' },
+            { q: "လုပ်ငန်းခွင်အစည်းအဝေးတစ်ခုမှာ စကားကို ဘယ်သူက စပြောတာကို ပိုနှစ်သက်သလဲ?", a: "A: ကိုယ်တိုင် ဦးဆောင်ဆွေးနွေးခြင်း", b: "B: တခြားသူတွေရဲ့ အမြင်ကို နားထောင်ပြီးမှ ဖြည့်စွက်ဆွေးနွေးခြင်း", typeA: 'E', typeB: 'I' },
+            { q: "ပတ်ဝန်းကျင်အသစ်ကို ရောက်တဲ့အခါ ဘယ်လိုနေလေ့ရှိလဲ?", a: "A: လူသစ်တွေနဲ့ ချက်ချင်း ရောနှော ပေါင်းသင်းခြင်း", b: "B: အခြေအနေကို စောင့်ကြည့်ပြီး တဖြည်းဖြည်း ရင်းနှီးခြင်း", typeA: 'E', typeB: 'I' },
+            { q: "သင့်ရဲ့ အားအင်တွေကို ဘယ်ကနေ ရယူသလဲ?", a: "A: ပြင်ပကမ္ဘာရဲ့ လှုပ်ရှားမှုတွေနဲ့ ဆက်သွယ်မှုတွေကနေ", b: "B: ကိုယ်ပိုင် အတွေးနဲ့ အတွင်းကမ္ဘာကနေ", typeA: 'E', typeB: 'I' },
+            { q: "ဖုန်းမြည်လာရင် ဘယ်လိုလုပ်လေ့ရှိလဲ?", a: "A: ချက်ချင်းကောက်ကိုင်ခြင်း", b: "B: ကိုင်သင့်၊ မကိုင်သင့် ခဏလောက် စဉ်းစားခြင်း", typeA: 'E', typeB: 'I' },
+            { q: "လူများတဲ့ ပွဲတွေမှာ ကိုယ့်ကိုယ်ကိုယ် ဘယ်လို ခံစားရသလဲ?", a: "A: တက်ကြွလန်းဆန်းပြီး ပျော်ရွှင်ခြင်း", b: "B: အားအင်ကုန်ခမ်းပြီး မကြာခင် အနားယူချင်ခြင်း", typeA: 'E', typeB: 'I' },
+            
+            // S (Sensing) vs N (Intuition) - 7 Qs
+            { q: "အချက်အလက်အသစ်တစ်ခုကို လေ့လာတဲ့အခါ ဘယ်အပေါ်မှာ ပိုအာရုံစိုက်သလဲ?", a: "A: လက်တွေ့ကျပြီး အသေးစိတ်သော အချက်အလက်များ", b: "B: ဖြစ်နိုင်ခြေများ၊ နောက်ကွယ်က အယူအဆများနှင့် ပုံစံများ", typeA: 'S', typeB: 'N' },
+            { q: "သင်ဟာ စိတ်ကူးယဉ်တတ်သူလား၊ လက်တွေ့ကျသူလား?", a: "A: လက်တွေ့ဘဝကို အခြေခံပြီး နေထိုင်တတ်သူ", b: "B: အနာဂတ်အတွက် အမြဲတမ်း စိတ်ကူးယဉ်နေတတ်သူ", typeA: 'S', typeB: 'N' },
+            { q: "အလုပ်လုပ်တဲ့အခါ ပိုနှစ်သက်တာက?", a: "A: ရှင်းလင်းပြီး သတ်မှတ်ထားတဲ့ စည်းမျဉ်းအတိုင်း လုပ်ကိုင်ခြင်း", b: "B: ကိုယ်ပိုင်တီထွင်ဖန်တီးမှုနဲ့ အသစ်အဆန်းရှာဖွေခြင်း", typeA: 'S', typeB: 'N' },
+            { q: "ပုံပြင်ပြောပြတဲ့အခါ ဘယ်လိုပြောတတ်လဲ?", a: "A: အဖြစ်အပျက်ကို အသေးစိတ်နဲ့ အဆင့်ဆင့် ပြောပြခြင်း", b: "B: အဓိက အယူအဆကိုသာ အကျဉ်းချုပ်ပြီး မြန်မြန်ပြောခြင်း", typeA: 'S', typeB: 'N' },
+            { q: "သင်ခန်းစာယူတဲ့အခါ ဘယ်လို ပိုနှစ်သက်လဲ?", a: "A: လက်တွေ့ လေ့ကျင့်မှု (Hands-on experience) ကနေ သင်ယူခြင်း", b: "B: သီအိုရီ (Theory) တွေနဲ့ အယူအဆတွေကနေ သင်ယူခြင်း", typeA: 'S', typeB: 'N' },
+            { q: "သင့်သူငယ်ချင်းက သင့်ကို ဘယ်လို ခေါ်ဝေါ်လေ့ရှိလဲ?", a: "A: အသေးစိတ် ဂရုစိုက်တတ်သူ", b: "B: အိပ်မက်မက်တတ်သူ၊ အမြင်ကျယ်သူ", typeA: 'S', typeB: 'N' },
+            { q: "ပြဿနာတစ်ခု ကြုံလာရင် ဘယ်လိုချဉ်းကပ်လေ့ရှိလဲ?", a: "A: လက်ရှိအချက်အလက်ကို ကြည့်ပြီး ချက်ချင်း ဖြေရှင်းခြင်း", b: "B: အဲဒီပြဿနာရဲ့ နောက်ဆက်တွဲ ဖြစ်နိုင်ခြေတွေကို စဉ်းစားခြင်း", typeA: 'S', typeB: 'N' },
+
+            // T (Thinking) vs F (Feeling) - 7 Qs
+            { q: "အရေးကြီးတဲ့ ဆုံးဖြတ်ချက်တွေ ချတဲ့အခါ ဘယ်အရာက ဦးစားပေးလဲ?", a: "A: ယုတ္တိ၊ အကြောင်းပြချက်နဲ့ ဘက်မလိုက်တဲ့ အချက်အလက်", b: "B: တန်ဖိုးထားမှု၊ လူတွေရဲ့ ခံစားချက်နဲ့ အကျိုးသက်ရောက်မှု", typeA: 'T', typeB: 'F' },
+            { q: "ကိုယ်ရေးကိုယ်တာ ကိစ္စမဟုတ်ရင် တခြားသူတွေနဲ့ စကားပြောတဲ့အခါ ဘယ်လိုပြောတတ်လဲ?", a: "A: ပွင့်လင်းပြီး တိုက်ရိုက်ပြောဆိုတတ်ခြင်း", b: "B: သဘောထားကြီးပြီး ယဉ်ကျေးအောင် ပြောဆိုတတ်ခြင်း", typeA: 'T', typeB: 'F' },
+            { q: "သူငယ်ချင်းတစ်ယောက် စိတ်ထိခိုက်နေရင် ဘယ်လိုတုံ့ပြန်မလဲ?", a: "A: ပြဿနာရဲ့ အဖြေကို ချက်ချင်း ရှာပေးခြင်း", b: "B: သူခံစားရတာကို စာနာနားလည်ပေးပြီး နှစ်သိမ့်ပေးခြင်း", typeA: 'T', typeB: 'F' },
+            { q: "သင့်ကို ဘယ်လိုအရာက ပိုမို တွန်းအားပေးလဲ?", a: "A: အလုပ်ကို တိကျစွာ ပြီးမြောက်ခြင်း၊ အမှန်တကယ် စွမ်းဆောင်နိုင်ခြင်း", b: "B: သူများအပေါ် အကောင်းဆုံး သက်ရောက်မှုရှိခြင်း၊ တခြားသူတွေက သင့်ကို တန်ဖိုးထားခြင်း", typeA: 'T', typeB: 'F' },
+            { q: "တခြားသူတစ်ဦးကို ချီးမွမ်းတဲ့အခါ ဘယ်အရာကို ပိုအာရုံစိုက်သလဲ?", a: "A: သူတို့ရဲ့ အလုပ်စွမ်းဆောင်ရည်နဲ့ ကျွမ်းကျင်မှု", b: "B: သူတို့ရဲ့ ကြိုးစားအားထုတ်မှု၊ စေတနာနဲ့ ကောင်းမွန်တဲ့ စိတ်ဓာတ်", typeA: 'T', typeB: 'F' },
+            { q: "ဝေဖန်မှုတစ်ခုကို ဘယ်လိုမြင်လဲ?", a: "A: သင်ယူဖို့ အခွင့်အရေးတစ်ခုလို့ မြင်ခြင်း", b: "B: ကိုယ့်ကိုယ်ကိုယ် တန်ဖိုးထားမှုကို ထိခိုက်စေတဲ့အရာလို့ ခံစားရခြင်း", typeA: 'T', typeB: 'F' },
+            { q: "တစ်ဦးချင်းစီရဲ့ အခြေအနေနဲ့ စည်းမျဉ်းစည်းကမ်း နှစ်ခုထဲက ဘယ်တစ်ခုကို ပိုအလေးထားသလဲ?", a: "A: တရားမျှတမှုအတွက် စည်းမျဉ်းကို လိုက်နာခြင်း", b: "B: စာနာမှုအတွက် တစ်ဦးချင်းစီရဲ့ အခြေအနေကို ထည့်သွင်းစဉ်းစားခြင်း", typeA: 'T', typeB: 'F' },
+
+            // J (Judging) vs P (Perceiving) - 8 Qs
+            { q: "ခရီးသွားတဲ့အခါ ဘယ်လိုစီစဉ်လေ့ရှိလဲ?", a: "A: ကြိုတင်စီစဉ်ထားတဲ့ အချိန်ဇယားနဲ့ အစီအစဉ်အတိုင်း သွားခြင်း", b: "B: ရောက်တဲ့နေရာမှာ အခြေအနေကြည့်ပြီး စိတ်အလိုလိုက် သွားခြင်း", typeA: 'J', typeB: 'P' },
+            { q: "အလုပ်တွေ လုပ်နေချိန်မှာ ဘယ်လိုခံစားရလဲ?", a: "A: အလုပ်တွေ ပြီးဆုံးသွားတဲ့အခါ စိတ်သက်သာရာရခြင်း", b: "B: အလုပ်တွေကို စတင်ဆဲ သို့မဟုတ် စီစဉ်နေဆဲ အချိန်ကို ပိုနှစ်သက်ခြင်း", typeA: 'J', typeB: 'P' },
+            { q: "သင်ဟာ စည်းကမ်းရှိသူလား၊ ပြောင်းလွယ်ပြင်လွယ်ရှိသူလား?", a: "A: စည်းကမ်းရှိပြီး အရာရာကို အပြီးသတ်ထားချင်သူ", b: "B: ပြောင်းလွယ်ပြင်လွယ်ရှိပြီး ရွေးချယ်စရာတွေ အမြဲဖွင့်ထားချင်သူ", typeA: 'J', typeB: 'P' },
+            { q: "အချိန်ကန့်သတ်ချက် (Deadline) နဲ့ ပတ်သက်ပြီး ဘယ်လို သဘောထားလဲ?", a: "A: အချိန်ဇယားကို လေးစားပြီး ကြိုတင်ပြီးမြောက်အောင် လုပ်ခြင်း", b: "B: နောက်ဆုံးအချိန်ရောက်မှ အလုပ်ပြီးအောင် လုပ်ခြင်းက ပိုပြီး စိတ်လှုပ်ရှားစေခြင်း", typeA: 'J', typeB: 'P' },
+            { q: "သင့်ရဲ့ အလုပ်စားပွဲ သို့မဟုတ် အခန်းကို ဘယ်လိုထားလေ့ရှိလဲ?", a: "A: သပ်ရပ်ပြီး အရာအားလုံးက နေရာတကျ ရှိနေခြင်း", b: "B: ဖန်တီးမှုအရ ရှုပ်ပွနေပေမယ့် လိုတာရှာတွေ့ခြင်း", typeA: 'J', typeB: 'P' },
+            { q: "ဆုံးဖြတ်ချက်ချပြီးတဲ့အခါ ဘယ်လိုနေတတ်လဲ?", a: "A: ဆုံးဖြတ်ချက်ကို ခိုင်မြဲစွာ လက်ခံပြီး ရှေ့ဆက်ခြင်း", b: "B: တခြားရွေးချယ်စရာတွေ ရှိနေသေးလားဆိုပြီး ပြန်စဉ်းစားနေခြင်း", typeA: 'J', typeB: 'P' },
+            { q: "နေ့စဉ်ဘဝကို ဘယ်လိုဖွဲ့စည်းလေ့ရှိလဲ?", a: "A: လုပ်စရာရှိတာတွေကို စာရင်းလုပ်ပြီး တစ်ဆင့်ချင်း လုပ်ဆောင်ခြင်း", b: "B: လိုအပ်တဲ့အတိုင်း လိုက်လျောညီထွေဖြစ်အောင် လုပ်ဆောင်ခြင်း", typeA: 'J', typeB: 'P' },
+            { q: "အားလပ်ရက်မှာ ဘာလုပ်ရမလဲ?", a: "A: အားလပ်ရက်အတွက် အစီအစဉ်အတိအကျ ဆွဲခြင်း", b: "B: အဲ့ဒီနေ့ရဲ့ စိတ်ခံစားချက်ပေါ် မူတည်ပြီး လုပ်ဆောင်ခြင်း", typeA: 'J', typeB: 'P' },
+        ];
+
+        let currentQuestionIndex = 0;
+        let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+        
+        // TWA ပတ်ဝန်းကျင် ဟုတ်မဟုတ် စစ်ဆေးရန် (const ဖြင့် တစ်ကြိမ်သာ ကြေညာပါ)
+        const isTelegramWebApp = window.Telegram && window.Telegram.WebApp; 
+
+        // MBTI Result Descriptions and Career Recommendations
+        const personalityTypes = {
+            'ISTJ': {
+                name: "The Logistician (ယုတ္တိဗေဒပညာရှင်)",
+                description: "လက်တွေ့ကျခြင်း၊ အချက်အလက်များကို အခြေခံခြင်း၊ တာဝန်ယူမှုရှိခြင်း။ သင်ဟာ စည်းမျဉ်းစည်းကမ်းနှင့် လုပ်ထုံးလုပ်နည်းများကို တန်ဖိုးထားပြီး တည်ငြိမ်စွာ လုပ်ဆောင်နိုင်သူ ဖြစ်ပါတယ်။",
+                careers: ["Data Analyst (ဒေတာ လေ့လာသုံးသပ်သူ)", "Financial Manager (ဘဏ္ဍာရေး စီမံခန့်ခွဲသူ)", "System Administrator (စနစ် စီမံခန့်ခွဲသူ)", "Auditor (စာရင်းစစ်)", "Geologist (ဘူမိဗေဒပညာရှင် - အသေးစိတ် လေ့လာမှု)", "Software Developer (ဆော့ဖ်ဝဲ ရေးသားသူ)"]
+            },
+            'ISFJ': {
+                name: "The Defender (ကာကွယ်စောင့်ရှောက်သူ)",
+                description: "နွေးထွေးခြင်း၊ စာနာတတ်ခြင်း၊ သစ္စာရှိခြင်း။ သင်ဟာ လက်တွေ့ကျသော အသေးစိတ်အချက်အလက်များကို မှတ်မိပြီး အခြားသူများ၏ လိုအပ်ချက်များကို အမြဲဂရုစိုက်သူ ဖြစ်ပါတယ်။",
+                careers: ["Teacher/Trainer (သင်တန်းပို့ချသူ)", "Librarian (စာကြည့်တိုက်မှူး)", "Human Resources (လူ့စွမ်းအားအရင်းအမြစ်)", "Counselor (အကြံပေးသူ)", "Nurse (သူနာပြု)", "Customer Service Manager (ဖောက်သည်ဝန်ဆောင်မှု မန်နေဂျာ)"]
+            },
+            'INFJ': {
+                name: "The Advocate (ထောက်ခံအားပေးသူ)",
+                description: "စေ့စပ်သေချာစွာ တွေးခေါ်သူ၊ စိတ်ကူးယဉ်ဆန်ပြီး အနာဂတ်ကို ကြိုတင်မျှော်မှန်းသူ။ သင်ဟာ ကိုယ်ပိုင်တန်ဖိုးများနဲ့ ကိုက်ညီသော အဓိပ္ပာယ်ရှိတဲ့ အလုပ်တွေကို လုပ်ချင်သူ ဖြစ်ပါတယ်။",
+                careers: ["Writer/Author (စာရေးဆရာ)", "Psychologist (စိတ်ပညာရှင်)", "University Professor (တက္ကသိုလ် ဆရာ)", "Creative Director (တီထွင်ဖန်တီးမှု ဒါရိုက်တာ)", "Non-profit Director (အကျိုးအမြတ်မယူသော အဖွဲ့အစည်း ဒါရိုက်တာ)"]
+            },
+            'INTJ': {
+                name: "The Architect (ဗိသုကာပညာရှင်)",
+                description: "ဆန်းသစ်တီထွင်သူ၊ ဉာဏ်ကြီးရှင်။ သင်ဟာ စိတ်ကူးစိတ်သန်းတွေကို လက်တွေ့ကျတဲ့ အစီအစဉ်တွေအဖြစ် ပြောင်းလဲနိုင်ပြီး စနစ်တကျ ပြဿနာဖြေရှင်းနိုင်သူ ဖြစ်ပါတယ်။",
+                careers: ["IT Architect (အိုင်တီ ဗိသုကာ)", "Investment Banker (ရင်းနှီးမြှုပ်နှံမှု ဘဏ်လုပ်ငန်းရှင်)", "Strategic Planner (မဟာဗျူဟာ ပညာရှင်)", "Research Scientist (သုတေသန ပညာရှင်)", "Engineer (အင်ဂျင်နီယာ)"]
+            },
+            'ISTP': {
+                name: "The Virtuoso (ကျွမ်းကျင်သူ)",
+                description: "လက်တွေ့ကျကျ စူးစမ်းတတ်သူ၊ ဆင်ခြင်တုံတရားရှိပြီး လိုက်လျောညီထွေစွာ နေထိုင်တတ်သူ။ သင်ဟာ စက်ကိရိယာတွေနဲ့ အလုပ်လုပ်တာကို နှစ်သက်ပြီး လျှို့ဝှက်ချက်တွေကို ဖော်ထုတ်ရတာကို ကြိုက်နှစ်သက်သူ ဖြစ်ပါတယ်။",
+                careers: ["Pilot (လေယာဉ်မှူး)", "Mechanic (စက်ပြင်ဆရာ)", "Geologist (ဘူမိဗေဒပညာရှင် - ကွင်းဆင်းလုပ်ငန်း)", "Python Developer (ပိုင်သွန် ရေးသားသူ)", "Composer/Musician (ဂီတပညာရှင်)", "Forensic Scientist (မှုခင်းဆေးပညာရှင်)"]
+            },
+            'ISFP': {
+                name: "The Adventurer (စွန့်စားသူ)",
+                description: "နူးညံ့သိမ်မွေ့ခြင်း၊ လိုက်လျောညီထွေရှိခြင်း၊ စိတ်ခံစားချက်ပြင်းထန်ခြင်း။ သင်ဟာ ကိုယ်ပိုင်တန်ဖိုးတွေကို အလေးထားပြီး အလှအပဆိုင်ရာ ဖန်တီးမှုတွေမှာ ပါဝင်ချင်သူ ဖြစ်ပါတယ်။",
+                careers: ["Musician/Producer (ဂီတထုတ်လုပ်သူ)", "Artist/Designer (အနုပညာရှင်)", "Photographer (ဓာတ်ပုံဆရာ)", "Massage Therapist (အနှိပ်ကုသသူ)", "Wildlife Conservationist (တောရိုင်းတိရစ္ဆာန် ထိန်းသိမ်းစောင့်ရှောက်သူ)"]
+            },
+            'INFP': {
+                name: "The Mediator (ကြားဝင်ဖျန်ဖြေသူ)",
+                description: "စိတ်ကူးယဉ်ဆန်သူ၊ တည်ငြိမ်သူ၊ နွေးထွေးသူ။ သင်ဟာ သူတစ်ပါးကို ကူညီထောက်ပံ့ပေးချင်ပြီး အဓိပ္ပာယ်ရှိတဲ့ အရေးကိစ္စတွေမှာ ပါဝင်ချင်သူ ဖြစ်ပါတယ်။",
+                careers: ["Editor (တည်းဖြတ်သူ)", "Journalist (သတင်းသမား)", "Counselor (အကြံပေး)", "Graphic Designer (ဂရပ်ဖစ် ဒီဇိုင်နာ)", "Creative Writer (ဖန်တီးမှု စာရေးသူ)", "Linguist (ဘာသာဗေဒ ပညာရှင်)"]
+            },
+            'INTP': {
+                name: "The Logician (ယုတ္တိဗေဒသမား)",
+                description: "ဆန်းသစ်တီထွင်သူ၊ အယူအဆပညာရှင်။ သင်ဟာ ဆင်ခြင်တုံတရားနှင့် ယုတ္တိကိုသာ အဓိကထားပြီး ရှုပ်ထွေးတဲ့ ပြဿနာတွေကို ခွဲခြမ်းစိတ်ဖြာဖို့ နှစ်သက်သူ ဖြစ်ပါတယ်။",
+                careers: ["Software Engineer (ဆော့ဖ်ဝဲ အင်ဂျင်နီယာ)", "Data Scientist (ဒေတာ သိပ္ပံပညာရှင်)", "Physicist (ရူပဗေဒပညာရှင်)", "Mathematician (သင်္ချာ ပညာရှင်)", "IT Consultant (အိုင်တီ အတိုင်ပင်ခံ)", "Researcher (သုတေသီ)"]
+            },
+            'ESTP': {
+                name: "The Entrepreneur (လုပ်ငန်းရှင်)",
+                description: "အင်အားပြည့်ဝခြင်း၊ လက်တွေ့လုပ်ဆောင်ခြင်း၊ စွန့်ဦးတီထွင်ခြင်း။ သင်ဟာ အခြေအနေအသစ်တွေကို လိုက်လျောညီထွေစွာ နေထိုင်နိုင်ပြီး ချက်ချင်းလက်ငင်း လုပ်ဆောင်မှုကို နှစ်သက်သူ ဖြစ်ပါတယ်။",
+                careers: ["Sales Manager (အရောင်းမန်နေဂျာ)", "Emergency Medical Technician (အရေးပေါ် ဆေးဘက်ဆိုင်ရာ ပညာရှင်)", "Real Estate Agent (အိမ်ခြံမြေ အကျိုးဆောင်)", "Entrepreneur (စီးပွားရေး လုပ်ငန်းရှင်)", "Drill Supervisor (တူးဖော်ရေး ကြီးကြပ်ရေးမှူး)"]
+            },
+            'ESFP': {
+                name: "The Entertainer (ဖျော်ဖြေသူ)",
+                description: "ဖော်ရွေခြင်း၊ လှုပ်ရှားတက်ကြွခြင်း၊ ပျော်ရွှင်အောင် ဖန်တီးနိုင်ခြင်း။ သင်ဟာ လူမှုပတ်ဝန်းကျင်မှာ အလင်းရောင်ပေးသူဖြစ်ပြီး ပစ္စုပ္ပန်ကို အပြည့်အဝ နေထိုင်သူ ဖြစ်ပါတယ်။",
+                careers: ["Actor/Actress (သရုပ်ဆောင်)", "Event Planner (ပွဲစီစဉ်သူ)", "Tour Guide (ခရီးသွား လမ်းညွှန်)", "Fashion Designer (ဖက်ရှင် ဒီဇိုင်နာ)", "Sales Representative (အရောင်းကိုယ်စားလှယ်)"]
+            },
+            'ENFP': {
+                name: "The Campaigner (လှုံ့ဆော်သူ)",
+                description: "စိတ်အားထက်သန်ခြင်း၊ တီထွင်ဖန်တီးနိုင်ခြင်း၊ လူမှုဆက်ဆံရေးကောင်းခြင်း။ သင်ဟာ စိတ်ကူးစိတ်သန်းများနဲ့ ပြည့်ဝပြီး အခြားသူများအား လှုံ့ဆော်မှု ပေးနိုင်သူ ဖြစ်ပါတယ်။",
+                careers: ["Marketing Specialist (စျေးကွက်ရှာဖွေရေး ပညာရှင်)", "Public Relations (လူထုဆက်ဆံရေး)", "Journalist (သတင်းသမား)", "Recruiter (ဝန်ထမ်း စုဆောင်းသူ)", "Motivational Speaker (လှုံ့ဆော်မှု စကားပြောသူ)", "Creative Consultant (တီထွင်ဖန်တီးမှု အတိုင်ပင်ခံ)"]
+            },
+            'ENTP': {
+                name: "The Debater (အငြင်းအခုန်သမား)",
+                description: "လျင်မြန်စွာ တွေးခေါ်နိုင်ခြင်း၊ ဉာဏ်ရည်ထက်မြက်ခြင်း၊ စိန်ခေါ်မှုကို နှစ်သက်ခြင်း။ သင်ဟာ အယူအဆအသစ်တွေကို အမြဲ ရှာဖွေပြီး ဆန့်ကျင်ဘက် အမြင်တွေကို စိန်ခေါ်တတ်သူ ဖြစ်ပါတယ်။",
+                careers: ["Lawyer (ရှေ့နေ)", "Venture Capitalist (ရင်းနှီးမြှုပ်နှံသူ)", "Management Consultant (စီမံခန့်ခွဲမှု အတိုင်ပင်ခံ)", "Entrepreneur (စွန့်ဦးတီထွင်သူ)", "Inventor (တီထွင်သူ)", "Software Architect (ဆော့ဖ်ဝဲ ဗိသုကာ)"]
+            },
+            'ESTJ': {
+                name: "The Executive (အမှုဆောင်အရာရှိ)",
+                description: "စီမံခန့်ခွဲနိုင်ခြင်း၊ တာဝန်ယူမှုရှိခြင်း၊ စနစ်တကျရှိခြင်း။ သင်ဟာ အစဉ်အလာကို လေးစားပြီး လူမှုအဖွဲ့အစည်းကို ဦးဆောင်ဖို့ သဘာဝအရပင် တတ်မြောက်သူ ဖြစ်ပါတယ်။",
+                careers: ["Military Officer (စစ်ဘက်အရာရှိ)", "Project Manager (စီမံကိန်း မန်နေဂျာ)", "Business Administrator (စီးပွားရေး စီမံခန့်ခွဲသူ)", "School Principal (ကျောင်းအုပ်)", "Production Manager (ထုတ်လုပ်မှု မန်နေဂျာ)"]
+            },
+            'ESFJ': {
+                name: "The Consul (ကောင်စစ်ဝန်)",
+                description: "ဂရုစိုက်တတ်ခြင်း၊ ပေါင်းသင်းဆက်ဆံရေး ကောင်းမွန်ခြင်း၊ လူမှုရေးအရ တက်ကြွခြင်း။ သင်ဟာ သူတစ်ပါးရဲ့ လိုအပ်ချက်ကို ဖြည့်ဆည်းပေးရတာကို နှစ်သက်ပြီး စည်းလုံးမှုကို ဖန်တီးနိုင်သူ ဖြစ်ပါတယ်။",
+                careers: ["Event Planner (ပွဲစီစဉ်သူ)", "Teacher (ဆရာ/ဆရာမ)", "Sales Representative (အရောင်းကိုယ်စားလှယ်)", "Social Worker (လူမှုဝန်ထမ်း)", "Office Manager (ရုံး မန်နေဂျာ)", "Customer Service (ဖောက်သည် ဝန်ဆောင်မှု)"]
+            },
+            'ENFJ': {
+                name: "The Protagonist (ခေါင်းဆောင်)",
+                description: "လှုံ့ဆော်ပေးနိုင်ခြင်း၊ စိတ်အားထက်သန်ခြင်း၊ ဆွဲဆောင်မှုရှိခြင်း။ သင်ဟာ လူမှုရေးအသိမြင့်မားပြီး သူတစ်ပါးရဲ့ အလားအလာကို မြှင့်တင်ပေးနိုင်တဲ့ သဘာဝခေါင်းဆောင်တစ်ဦး ဖြစ်ပါတယ်။",
+                careers: ["Politician (နိုင်ငံရေးသမား)", "Public Speaker (လူထု စကားပြောသူ)", "Trainer/Coach (နည်းပြ/သင်တန်းပို့ချသူ)", "Non-profit Manager (အကျိုးအမြတ်မယူသော အဖွဲ့အစည်း မန်နေဂျာ)", "PR Executive (လူထုဆက်ဆံရေး အရာရှိ)"]
+            },
+            'ENTJ': {
+                name: "The Commander (တပ်မှူး)",
+                description: "ရဲရင့်ခြင်း၊ ဆုံးဖြတ်ချက် ခိုင်မာခြင်း၊ စိတ်အားထက်သန်ခြင်း။ သင်ဟာ ရှည်လျားတဲ့ ရည်မှန်းချက်တွေကို ဖန်တီးနိုင်ပြီး အဖွဲ့အစည်းတွေကို ဦးဆောင်ကာ အပြောင်းအလဲတွေကို ဖန်တီးနိုင်သူ ဖြစ်ပါတယ်။",
+                careers: ["CEO (အမှုဆောင် အရာရှိချုပ်)", "Entrepreneur (စွန့်ဦးတီထွင်သူ)", "Attorney (ရှေ့နေ)", "Venture Capitalist (ရင်းနှီးမြှုပ်နှံသူ)", "Management Consultant (စီမံခန့်ခွဲမှု အတိုင်ပင်ခံ)", "Project Director (စီမံကိန်း ဒါရိုက်တာ)"]
+            }
+        };
+
+        const qNumberElement = document.getElementById('q-number');
+        const questionTextElement = document.getElementById('question-text');
+        const answerAButton = document.getElementById('answer-a');
+        const answerBButton = document.getElementById('answer-b');
+        const progressBar = document.getElementById('progress-bar');
+
+        function startTest() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.remove('hidden');
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const q = questions[currentQuestionIndex];
+                qNumberElement.textContent = currentQuestionIndex + 1;
+                questionTextElement.textContent = q.q;
+                answerAButton.textContent = q.a;
+                answerBButton.textContent = q.b;
+                updateProgressBar();
+            } else {
+                calculateResult();
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = (currentQuestionIndex / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function recordAnswer(choice) {
+            const q = questions[currentQuestionIndex];
+            
+            if (choice === 'A') {
+                scores[q.typeA]++;
+            } else if (choice === 'B') {
+                scores[q.typeB]++;
+            }
+
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        function calculateResult() {
+            // Determine the winning letter for each dichotomy
+            const E_or_I = scores.E >= scores.I ? 'E' : 'I';
+            const S_or_N = scores.S >= scores.N ? 'S' : 'N';
+            const T_or_F = scores.T >= scores.F ? 'T' : 'F';
+            const J_or_P = scores.J >= scores.P ? 'J' : 'P';
+
+            const mbtiType = E_or_I + S_or_N + T_or_F + J_or_P;
+            displayResult(mbtiType);
+        }
+
+        function displayResult(mbtiType) {
+            document.getElementById('test-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const result = personalityTypes[mbtiType] || {
+                name: "Type Not Found",
+                description: "သင့်ရဲ့ အဖြေတွေနဲ့ ကိုက်ညီတဲ့ MBTI အမျိုးအစားကို ရှာမတွေ့ပါ။",
+                careers: ["..."]
+            };
+
+            document.getElementById('personality-type').textContent = mbtiType + ' - ' + result.name;
+            document.getElementById('type-description').textContent = result.description;
+            
+            const careerList = document.getElementById('career-list');
+            careerList.innerHTML = ''; // Clear previous list
+
+            // Add career recommendations
+            result.careers.forEach(career => {
+                const li = document.createElement('li');
+                li.textContent = career;
+                careerList.appendChild(li);
+            });
+
+            // TWA Customization: Change final button action and text if running in Telegram
+            const finalActionButton = document.getElementById('final-action-button');
+            if (isTelegramWebApp) {
+                // Change button style and action for native TWA feel
+                finalActionButton.textContent = "ရလဒ်အပြည့်အစုံကိုဖတ်ပြီး App ပိတ်မည်";
+                finalActionButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+                finalActionButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                
+                finalActionButton.onclick = () => {
+                    // Send result back to the bot chat window
+                    const message = `🎉 ကျွန်ုပ်၏ MBTI စမ်းသပ်မှု ရလဒ်မှာ:\n\n*${mbtiType} - ${result.name}* (${result.description.substring(0, 30)}...)\n\nကိုယ်ရည်ကိုယ်သွေး အမျိုးအစားကို အပြည့်အစုံသိရှိဖို့ ဒီ Bot ရဲ့ Menu ကို သုံးကြည့်ပါ!`;
+                    window.Telegram.WebApp.sendData(message);
+                    
+                    // Close the Mini App window
+                    window.Telegram.WebApp.close();
+                };
+            }
+            // If not TWA, it keeps the default 'window.location.reload()' from HTML defined in the tag.
+        }
+
+        // Initialize App on load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isTelegramWebApp) {
+                window.Telegram.WebApp.ready();
+                // TWA ၏ Window ကို အပြည့်အဝ ဖွင့်ပေးရန်
+                window.Telegram.WebApp.expand();
+            }
+        });
+
+    </script>
+</body>
+</html>
