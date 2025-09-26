@@ -8,6 +8,7 @@
     <!-- TWA SDK: Telegram Mini App ၏ လုပ်ဆောင်ချက်များကို အသုံးပြုရန် ထည့်သွင်းထားသည် -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* Padauk font ကို မြန်မာစာအတွက် ထည့်သွင်းထားသည် */
         @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
         body {
             font-family: 'Padauk', sans-serif;
@@ -40,11 +41,11 @@
         <div id="welcome-screen">
             <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">🤖 Personality Creator Bot</h1>
             <p class="text-gray-600 mb-6 text-center">
-                သင့်ရဲ့ ကိုယ်ရည်ကိုယ်သွေး အမျိုးအစား (MBTI) ကို ရှာဖွေဖို့ မေးခွန်း ၃၀ ကို ဖြေကြားရမှာ ဖြစ်ပါတယ်။ အဖြေတစ်ခုချင်းစီဟာ သင့်ရဲ့ စိတ်နေစိတ်ထားကို ဖော်ပြပါတယ်။
+                သင့်ရဲ့ ကိုယ်ရည်ကိုယ်သွေး အမျိုးအစား (MBTI) ကို ရှာဖွေဖို့ မေးခွန်း ၃၀ ကို ဖြေကြားရမှာ ဖြစ်ပါတယ်။
             </p>
             <div class="p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 rounded-lg mb-6">
                 <p class="font-semibold">မှတ်ချက်။</p>
-                <p class="text-sm">စိတ်ထဲအရှိအတိုင်း အချိန်မဆွဲဘဲ ဖြေဆိုပေးပါ။ "မှား" တဲ့အဖြေဆိုတာ မရှိပါဘူး။</p>
+                <p class="text-sm">စိတ်ထဲအရှိအတိုင်း အချိန်မဆွဲဘဲ ဖြေဆိုပေးပါ။</p>
             </div>
             <button onclick="startTest()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl btn-answer hover:bg-blue-700">
                 စတင်ရန် /start
@@ -93,17 +94,19 @@
                     <h3 class="text-2xl font-bold text-gray-800 mb-2 border-b pb-1">💼 သင့်လျော်သော အလုပ်အကိုင်များ</h3>
                     <ul id="career-list" class="list-disc list-inside text-gray-700 pl-4 space-y-1"></ul>
                 </div>
-
-                    <!-- The default action is window.location.reload() for non-TWA usage -->
-                    <button id="final-action-button" onclick="window.location.reload()" class="w-full bg-red-500 text-white font-semibold py-3 rounded-xl btn-answer mt-6 hover:bg-red-600">
-                        ပြန်စတင်ရန်
-                    </button>
+                
+                <!-- This button is ONLY for non-TWA usage (Web/Canvas) -->
+                <button id="final-action-button" onclick="window.location.reload()" class="w-full bg-red-500 text-white font-semibold py-3 rounded-xl btn-answer mt-6 hover:bg-red-600">
+                    ပြန်စတင်ရန် (Web Browser သုံးရန်)
+                </button>
             </div>
         </div>
 
     </div>
 
     <script>
+        // ... (questions and personalityTypes data remain unchanged) ...
+
         const questions = [
             // E (Extroversion) vs I (Introversion) - 8 Qs
             { q: "လူအများနဲ့အတူ လှုပ်ရှားရတာကို ပိုနှစ်သက်သလား ဒါမှမဟုတ် တစ်ယောက်တည်း အေးဆေးနေရတာကို ပိုနှစ်သက်သလား?", a: "A: လူအများနဲ့အတူ လှုပ်ရှားခြင်း", b: "B: တစ်ယောက်တည်း အေးဆေးနေခြင်း", typeA: 'E', typeB: 'I' },
@@ -147,8 +150,9 @@
         let currentQuestionIndex = 0;
         let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
         
-        // TWA ပတ်ဝန်းကျင် ဟုတ်မဟုတ် စစ်ဆေးရန် (const ဖြင့် တစ်ကြိမ်သာ ကြေညာပါ)
+        // TWA ပတ်ဝန်းကျင် ဟုတ်မဟုတ် စစ်ဆေးရန်
         const isTelegramWebApp = window.Telegram && window.Telegram.WebApp; 
+        const tg = isTelegramWebApp ? window.Telegram.WebApp : null;
 
         // MBTI Result Descriptions and Career Recommendations
         const personalityTypes = {
@@ -210,7 +214,7 @@
             'ENTP': {
                 name: "The Debater (အငြင်းအခုန်သမား)",
                 description: "လျင်မြန်စွာ တွေးခေါ်နိုင်ခြင်း၊ ဉာဏ်ရည်ထက်မြက်ခြင်း၊ စိန်ခေါ်မှုကို နှစ်သက်ခြင်း။ သင်ဟာ အယူအဆအသစ်တွေကို အမြဲ ရှာဖွေပြီး ဆန့်ကျင်ဘက် အမြင်တွေကို စိန်ခေါ်တတ်သူ ဖြစ်ပါတယ်။",
-                careers: ["Lawyer (ရှေ့နေ)", "Venture Capitalist (ရင်းနှီးမြှုပ်နှံသူ)", "Management Consultant (စီမံခန့်ခွဲမှု အတိုင်ပင်ခံ)", "Entrepreneur (စွန့်ဦးတီထွင်သူ)", "Inventor (တီထွင်သူ)", "Software Architect (ဆော့ဖ်ဝဲ ဗိသုကာ)"]
+                careers: ["Lawyer (ရှေ့နေ)", "Venture Capitalist (ရင်းနှီးမြှုပ်နှံမှု ဘဏ်လုပ်ငန်းရှင်)", "Management Consultant (စီမံခန့်ခွဲမှု အတိုင်ပင်ခံ)", "Entrepreneur (စွန့်ဦးတီထွင်သူ)", "Inventor (တီထွင်သူ)", "Software Architect (ဆော့ဖ်ဝဲ ဗိသုကာ)"]
             },
             'ESTJ': {
                 name: "The Executive (အမှုဆောင်အရာရှိ)",
@@ -239,6 +243,7 @@
         const answerAButton = document.getElementById('answer-a');
         const answerBButton = document.getElementById('answer-b');
         const progressBar = document.getElementById('progress-bar');
+        const finalActionButton = document.getElementById('final-action-button'); // Web/Canvas button
 
         function startTest() {
             document.getElementById('welcome-screen').classList.add('hidden');
@@ -311,32 +316,41 @@
                 careerList.appendChild(li);
             });
 
-            // TWA Customization: Change final button action and text if running in Telegram
-            const finalActionButton = document.getElementById('final-action-button');
-            if (isTelegramWebApp) {
-                // Change button style and action for native TWA feel
-                finalActionButton.textContent = "ရလဒ်အပြည့်အစုံကိုဖတ်ပြီး App ပိတ်မည်";
-                finalActionButton.classList.remove('bg-red-500', 'hover:bg-red-600');
-                finalActionButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            // TWA Customization: Use MainButton for reliable closing
+            if (isTelegramWebApp && tg) {
+                // 1. Hide the standard HTML button
+                finalActionButton.classList.add('hidden');
+
+                // 2. Configure the TWA MainButton
+                const mainButton = tg.MainButton;
+                mainButton.text = "ရလဒ်အပြည့်အစုံကိုဖတ်ပြီး App ပိတ်မည်";
+                mainButton.color = tg.themeParams.button_color || '#3390ec'; // Use Telegram's primary color
+                mainButton.show();
                 
-                finalActionButton.onclick = () => {
-                    // Send result back to the bot chat window
+                // 3. Set the click handler for the MainButton
+                mainButton.onClick(() => {
                     const message = `🎉 ကျွန်ုပ်၏ MBTI စမ်းသပ်မှု ရလဒ်မှာ:\n\n*${mbtiType} - ${result.name}* (${result.description.substring(0, 30)}...)\n\nကိုယ်ရည်ကိုယ်သွေး အမျိုးအစားကို အပြည့်အစုံသိရှိဖို့ ဒီ Bot ရဲ့ Menu ကို သုံးကြည့်ပါ!`;
-                    window.Telegram.WebApp.sendData(message);
+                    
+                    // Send data back to the bot
+                    tg.sendData(message);
                     
                     // Close the Mini App window
-                    window.Telegram.WebApp.close();
-                };
+                    tg.close(); 
+                });
+            } else {
+                // Show the standard HTML button for non-TWA environments
+                finalActionButton.classList.remove('hidden');
             }
-            // If not TWA, it keeps the default 'window.location.reload()' from HTML defined in the tag.
         }
 
         // Initialize App on load
         document.addEventListener('DOMContentLoaded', () => {
-            if (isTelegramWebApp) {
-                window.Telegram.WebApp.ready();
+            if (isTelegramWebApp && tg) {
+                tg.ready();
                 // TWA ၏ Window ကို အပြည့်အဝ ဖွင့်ပေးရန်
-                window.Telegram.WebApp.expand();
+                tg.expand();
+                // Back button ကို ဖျောက်ထားပါ (ဒီ App က မျက်နှာပြင်တစ်ခုတည်းမို့)
+                tg.BackButton.hide(); 
             }
         });
 
